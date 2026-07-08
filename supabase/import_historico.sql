@@ -1099,7 +1099,7 @@ join categorias cat on cat.nome = v.categoria_nome
 join contas ct on ct.nome = v.conta_nome and ct.conta_pai_id is null;
 
 -- ---------------------------------------------------------------------------
--- Saídas (170 lançamentos, 2026-02 a 2026-07)
+-- Saídas (168 lançamentos, 2026-02 a 2026-07)
 -- ---------------------------------------------------------------------------
 insert into lancamentos (tipo, valor, descricao, data_competencia, data_vencimento, data_pagamento, status, categoria_id, conta_id, anotacoes)
 select v.tipo::tipo_lancamento, v.valor::numeric, v.descricao, v.data_competencia::date, v.data_vencimento::date, v.data_pagamento::date, v.status::status_lancamento, cat.id, ct.id, v.anotacoes
@@ -1136,7 +1136,6 @@ from (values
   ('saida', 46.41, 'Force line filtro linha 5t bicolor slim pt', '2026-02-27', '2026-02-28', '2026-02-27', 'pago', 'Compras de uso e consumo', 'Caixa da empresa', NULL),
   ('saida', 54.00, '03 Tomadas Tramontina Sobrepor', '2026-02-27', '2026-02-28', '2026-02-27', 'pago', 'Compras de uso e consumo', 'Caixa da empresa', NULL),
   ('saida', 128.00, 'Materiais para reparos no escritório', '2026-02-27', '2026-02-28', '2026-02-27', 'pago', 'Compras de uso e consumo', 'Caixa da empresa', NULL),
-  ('saida', 5000.00, 'Investimento', '2026-02-28', '2026-02-28', '2026-02-28', 'pago', 'Investimento', 'Caixa da empresa', NULL),
   ('saida', 10000.00, 'Retirada de lucro Gabriel""', '2026-02-28', '2026-02-28', '2026-02-28', 'pago', 'Retirada de lucro', 'Investimento', NULL),
   ('saida', 2000.00, 'Imposto Rf: 03/26', '2026-02-28', '2026-02-28', '2026-02-28', 'pago', 'Imposto', 'Caixa da empresa', NULL),
   ('saida', 17000.00, 'Retirada de lucro', '2026-02-28', '2026-02-28', '2026-02-28', 'pago', 'Retirada de lucro', 'Caixa da empresa', NULL),
@@ -1159,8 +1158,7 @@ from (values
   ('saida', 52.00, 'Compras de uso e consumo.', '2026-03-17', '2026-03-18', '2026-03-17', 'pago', 'Compras de uso e consumo', 'Investimento', NULL),
   ('saida', 73.50, 'Compras de uso e consumo', '2026-03-17', '2026-03-18', '2026-03-17', 'pago', 'Compras de uso e consumo', 'Investimento', NULL),
   ('saida', 2000.00, 'Imposto Rf: 04/26', '2026-03-17', '2026-03-18', '2026-03-17', 'pago', 'Imposto', 'Caixa da empresa', 'Valor enviado para cofrinho de imposto da Nubank.'),
-  ('saida', 5000.00, 'Enviado para o caixa de investimento', '2026-03-17', '2026-03-23', '2026-03-17', 'pago', 'Investimento', 'Caixa da empresa', NULL),
-  ('saida', 5000.00, 'Retirada de lucro Gabriel""', '2026-03-31', '2026-03-31', '2026-03-17', 'pago', 'Investimento', 'Investimento', NULL),
+  ('saida', 5000.00, 'Retirada de lucro Gabriel""', '2026-03-31', '2026-03-31', '2026-03-17', 'pago', 'Retirada de lucro', 'Investimento', NULL),
   ('saida', 23.00, 'Água', '2026-03-23', '2026-02-28', '2026-03-23', 'pago', 'Despesas da empresa', 'Caixa da empresa', NULL),
   ('saida', 200.00, 'Serviço terceirizado - Instagram (Cliente: Freitas)', '2026-03-23', '2026-03-30', '2026-03-23', 'pago', 'Salários', 'Caixa da empresa', NULL),
   ('saida', 26.98, 'Compras de uso  e consumo', '2026-03-25', '2026-03-26', '2026-03-25', 'pago', 'Compras de uso e consumo', 'Investimento', NULL),
@@ -1277,3 +1275,15 @@ from (values
 ) as v(tipo, valor, descricao, data_competencia, data_vencimento, data_pagamento, status, categoria_nome, conta_nome, anotacoes)
 join categorias cat on cat.nome = v.categoria_nome
 join contas ct on ct.nome = v.conta_nome and ct.conta_pai_id is null;
+
+-- ---------------------------------------------------------------------------
+-- Transferências (2 — Caixa da empresa -> Investimento, confirmadas com o usuário)
+-- ---------------------------------------------------------------------------
+insert into transferencias (conta_origem_id, conta_destino_id, valor, data, descricao)
+select ct_origem.id, ct_destino.id, v.valor::numeric, v.data::date, v.descricao
+from (values
+  (5000.00, '2026-02-28', 'Investimento'),
+  (5000.00, '2026-03-17', 'Enviado para o caixa de investimento')
+) as v(valor, data, descricao)
+join contas ct_origem on ct_origem.nome = 'Caixa da empresa' and ct_origem.conta_pai_id is null
+join contas ct_destino on ct_destino.nome = 'Investimento' and ct_destino.conta_pai_id is null;
