@@ -255,3 +255,123 @@ body {
   background: var(--primary-soft);
   border-color: var(--primary);
 }
+
+/* ------------------------------------------------------------------ */
+/* Forms                                                               */
+/* ------------------------------------------------------------------ */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--foreground-soft);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  font: inherit;
+  font-weight: 400;
+  color: var(--foreground);
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-family: inherit;
+}
+
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.form-field textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.form-field textarea { resize: vertical; }
+
+.form-row {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--negative);
+  background: color-mix(in srgb, var(--negative) 10%, transparent);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #17140f;
+}
+.btn-primary:hover { background: var(--primary-dark); color: #fff; }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary-dark); }
+
+.btn-danger {
+  background: transparent;
+  color: var(--negative);
+  border: 1px solid color-mix(in srgb, var(--negative) 40%, transparent);
+}
+.btn-danger:hover { background: color-mix(in srgb, var(--negative) 10%, transparent); }
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-danger:focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 2px;
+}
+
+.toggle-group {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.toggle-group label {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--foreground-soft);
+}
+
+.toggle-group input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-group input:checked + label,
+.toggle-group label:has(input:checked) {
+  background: var(--primary);
+  color: #17140f;
+}

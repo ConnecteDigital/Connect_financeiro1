@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ClientesPage() {
@@ -9,9 +10,14 @@ export default async function ClientesPage() {
 
   return (
     <>
-      <div className="page-header">
-        <h1>Clientes</h1>
-        <p>Cadastro único — nome é o único campo obrigatório.</p>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1>Clientes</h1>
+          <p>Cadastro único — nome é o único campo obrigatório.</p>
+        </div>
+        <Link href="/dashboard/clientes/novo" className="btn-primary">
+          Novo cliente
+        </Link>
       </div>
 
       {error ? (
@@ -32,7 +38,9 @@ export default async function ClientesPage() {
             <tbody>
               {clientes.map((cliente) => (
                 <tr key={cliente.id} style={{ borderTop: "1px solid var(--border)" }}>
-                  <td style={{ padding: ".5rem 0" }}>{cliente.nome}</td>
+                  <td style={{ padding: ".5rem 0" }}>
+                    <Link href={`/dashboard/clientes/${cliente.id}`}>{cliente.nome}</Link>
+                  </td>
                   <td style={{ padding: ".5rem 0", color: "var(--foreground-soft)" }}>
                     {cliente.email || "—"}
                   </td>

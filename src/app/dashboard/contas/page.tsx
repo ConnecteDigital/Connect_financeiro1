@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/format";
 
@@ -20,9 +21,19 @@ export default async function ContasPage() {
 
   return (
     <>
-      <div className="page-header">
-        <h1>Contas</h1>
-        <p>Caixa da empresa, Investimento e as caixinhas dentro de cada uma.</p>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1>Contas</h1>
+          <p>Caixa da empresa, Investimento e as caixinhas dentro de cada uma.</p>
+        </div>
+        <div style={{ display: "flex", gap: ".6rem" }}>
+          <Link href="/dashboard/contas/nova-caixinha" className="btn-secondary">
+            Nova caixinha
+          </Link>
+          <Link href="/dashboard/contas/transferir" className="btn-primary">
+            Transferir
+          </Link>
+        </div>
       </div>
 
       {error ? (
@@ -66,11 +77,6 @@ export default async function ContasPage() {
           ))}
         </div>
       )}
-
-      <p className="placeholder-note" style={{ marginTop: "1rem" }}>
-        Próximo passo: formulário para criar caixinha e para registrar transferência entre
-        contas/caixinhas.
-      </p>
     </>
   );
 }

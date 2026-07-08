@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -19,9 +20,14 @@ export default async function LancamentosPage() {
 
   return (
     <>
-      <div className="page-header">
-        <h1>Entradas e Saídas</h1>
-        <p>Lançamentos mais recentes — competência, vencimento, categoria e conta.</p>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1>Entradas e Saídas</h1>
+          <p>Lançamentos mais recentes — competência, vencimento, categoria e conta.</p>
+        </div>
+        <Link href="/dashboard/lancamentos/novo" className="btn-primary">
+          Novo lançamento
+        </Link>
       </div>
 
       {error ? (
@@ -47,7 +53,9 @@ export default async function LancamentosPage() {
               {lancamentos.map((l) => (
                 <tr key={l.id} style={{ borderTop: "1px solid var(--border)" }}>
                   <td style={{ padding: ".5rem .5rem .5rem 0" }}>{formatDate(l.data_vencimento)}</td>
-                  <td style={{ padding: ".5rem" }}>{l.descricao}</td>
+                  <td style={{ padding: ".5rem" }}>
+                    <Link href={`/dashboard/lancamentos/${l.id}`}>{l.descricao}</Link>
+                  </td>
                   <td style={{ padding: ".5rem", color: "var(--foreground-soft)" }}>
                     {(l.clientes as unknown as { nome: string } | null)?.nome ?? "—"}
                   </td>
@@ -79,8 +87,8 @@ export default async function LancamentosPage() {
       )}
 
       <p className="placeholder-note" style={{ marginTop: "1rem" }}>
-        Próximo passo: formulário de novo lançamento (com recorrência), filtros por período/conta/
-        categoria e ação de estornar.
+        Próximo passo: filtros por período/conta/categoria e importação em massa do histórico
+        migrado.
       </p>
     </>
   );

@@ -1,14 +1,22 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { SUPABASE_URL, SUPABASE_ANON_KEY, isSupabaseConfigured } from './config'
 
 const PUBLIC_PATHS = ['/login']
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
 
+  // Supabase ainda não foi configurado (sem projeto criado / .env.local
+  // vazio) — deixa passar sem exigir login, já que não há sessão real
+  // possível ainda. Cada página trata a ausência de dados por conta própria.
+  if (!isSupabaseConfigured) {
+    return response
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
