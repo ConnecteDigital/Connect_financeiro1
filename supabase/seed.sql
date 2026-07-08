@@ -11,8 +11,8 @@ insert into grupos_categoria (nome, secao) values
   ('Atividades de Financiamento', 'atividades_financiamento');
 
 insert into categorias (grupo_id, nome, ativa)
-select id, nome, true
-from grupos_categoria, (values
+select gc.id, c.nome, true
+from grupos_categoria gc, (values
   ('Receita Operacional', 'Mensalidade'),
   ('Receita Operacional', 'Mensalidade Semanal'),
   ('Receita Operacional', 'Freelancer'),
@@ -42,17 +42,17 @@ from grupos_categoria, (values
   ('Atividades de Financiamento', 'Pagamento de empréstimo'),
   ('Atividades de Financiamento', 'Retirada de capital')
 ) as c(grupo_nome, nome)
-where grupos_categoria.nome = c.grupo_nome;
+where gc.nome = c.grupo_nome;
 
 -- Categorias legadas: preservam o histórico importado, mas não ficam
 -- disponíveis para novos lançamentos (o acordo com o João virou salário fixo).
 insert into categorias (grupo_id, nome, ativa)
-select id, nome, false
-from grupos_categoria, (values
+select gc.id, c.nome, false
+from grupos_categoria gc, (values
   ('Receita Operacional', 'Porcentagem'),
   ('Receita Operacional', 'Porcentagem de João')
 ) as c(grupo_nome, nome)
-where grupos_categoria.nome = c.grupo_nome;
+where gc.nome = c.grupo_nome;
 
 insert into contas (nome) values
   ('Caixa da empresa'),
