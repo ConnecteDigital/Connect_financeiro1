@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { createTransferencia } from "../actions";
 
@@ -12,7 +13,7 @@ export default async function TransferirPage({
     .from("contas")
     .select("id, nome, conta_pai_id")
     .order("nome");
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = format(new Date(), "yyyy-MM-dd");
 
   return (
     <>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
 
 type Opcao = { id: string; nome: string };
 type Categoria = { id: string; nome: string; secao: string };
@@ -46,7 +47,7 @@ export function LancamentoForm({
   const [jaPago, setJaPago] = useState(lancamento?.status === "pago");
   const [recorrenciaAtiva, setRecorrenciaAtiva] = useState(false);
   const [modoRecorrencia, setModoRecorrencia] = useState<"fixa" | "parcelada">("fixa");
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = format(new Date(), "yyyy-MM-dd");
 
   const categoriasFiltradas = useMemo(
     () =>
