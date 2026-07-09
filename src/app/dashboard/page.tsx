@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { startOfMonth, endOfMonth, format, eachDayOfInterval } from "date-fns";
+import { startOfMonth, endOfMonth, format, eachDayOfInterval, parseISO, isValid } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { FluxoDeCaixaChart } from "./FluxoDeCaixaChart";
 import { LancamentosList, type LinhaLancamento } from "./LancamentosList";
+import { PeriodoPicker } from "./PeriodoPicker";
 
 const ISO = (d: Date) => format(d, "yyyy-MM-dd");
 
@@ -32,15 +33,26 @@ function kpiCard(label: string, valor: string, previsto?: string, cor?: string) 
   );
 }
 
-export default async function PainelPage() {
+function periodoValido(v: string | undefined): Date | null {
+  if (!v) return null;
+  const d = parseISO(v);
+  return isValid(d) ? d : null;
+}
+
+export default async function PainelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ inicio?: string; fim?: string }>;
+}) {
   const supabase = await createClient();
 
+  const { inicio, fim } = await searchParams;
   const hoje = new Date();
-  const inicioMes = startOfMonth(hoje);
-  const fimMes = endOfMonth(hoje);
+  const inicioMes = periodoValido(inicio) ?? startOfMonth(hoje);
+  const fimMes = periodoValido(fim) ?? endOfMonth(hoje);
   const isoInicio = ISO(inicioMes);
   const isoFim = ISO(fimMes);
-  const mesLabel = format(hoje, "MM/yyyy");
+  const periodoLabel = `${formatDate(isoInicio)} – ${formatDate(isoFim)}`;
 
   const [
     { data: contas, error: contasError },
@@ -57,14 +69,16 @@ export default async function PainelPage() {
       .eq("tipo", "entrada")
       .or(
         `and(data_vencimento.gte.${isoInicio},data_vencimento.lte.${isoFim}),and(data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`
-      ),
+      )
+      .order("data_vencimento", { ascending: true }),
     supabase
       .from("v_lancamentos")
       .select("id, valor, descricao, status, status_efetivo, data_competencia, data_vencimento, clientes(nome)")
       .eq("tipo", "saida")
       .or(
         `and(data_vencimento.gte.${isoInicio},data_vencimento.lte.${isoFim}),and(data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`
-      ),
+      )
+      .order("data_vencimento", { ascending: true }),
     supabase.from("v_lancamentos").select("valor").eq("status_efetivo", "vencido"),
     supabase.from("transferencias").select("valor").gte("data", isoInicio).lte("data", isoFim),
     supabase
@@ -130,7 +144,8 @@ export default async function PainelPage() {
     acumulado += m.tipo === "entrada" ? Number(m.valor) : -Number(m.valor);
     saldoAcumuladoPorDia.set(m.data_competencia, acumulado);
   }
-  const dias = eachDayOfInterval({ start: inicioMes, end: hoje < fimMes ? hoje : fimMes });
+  const fimGrafico = hoje < inicioMes ? inicioMes : hoje < fimMes ? hoje : fimMes;
+  const dias = eachDayOfInterval({ start: inicioMes, end: fimGrafico });
   const datasConhecidas = [...saldoAcumuladoPorDia.keys()].sort();
   const chartData: { dia: string; saldo: number }[] = [];
   let ultimoValorConhecido = 0;
@@ -154,9 +169,12 @@ export default async function PainelPage() {
 
   return (
     <>
-      <div className="page-header">
-        <h1>Painel</h1>
-        <p>Visão geral do caixa da empresa — {mesLabel}.</p>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: ".8rem" }}>
+        <div>
+          <h1>Painel</h1>
+          <p>Visão geral do caixa da empresa — {periodoLabel}.</p>
+        </div>
+        <PeriodoPicker inicio={isoInicio} fim={isoFim} />
       </div>
 
       <div

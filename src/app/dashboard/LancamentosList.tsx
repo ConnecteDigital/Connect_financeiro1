@@ -26,14 +26,34 @@ export function LancamentosList({
 }) {
   const [aba, setAba] = useState<"pendente" | "pago" | "vencido">("pendente");
   const [busca, setBusca] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const porPagina = 8;
 
   const filtradas = useMemo(() => {
     return linhas
       .filter((l) => l.status_efetivo === aba)
-      .filter((l) => l.descricao.toLowerCase().includes(busca.toLowerCase()) || (l.contraparte ?? "").toLowerCase().includes(busca.toLowerCase()));
+      .filter(
+        (l) =>
+          l.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+          (l.contraparte ?? "").toLowerCase().includes(busca.toLowerCase())
+      )
+      .sort((a, b) => a.data_vencimento.localeCompare(b.data_vencimento));
   }, [linhas, aba, busca]);
 
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / porPagina));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const visiveis = filtradas.slice((paginaAtual - 1) * porPagina, paginaAtual * porPagina);
   const total = filtradas.reduce((acc, l) => acc + l.valor, 0);
+
+  function mudarAba(novaAba: typeof aba) {
+    setAba(novaAba);
+    setPagina(1);
+  }
+
+  function mudarBusca(valor: string) {
+    setBusca(valor);
+    setPagina(1);
+  }
 
   return (
     <div className="card">
@@ -43,7 +63,7 @@ export function LancamentosList({
           <input
             placeholder="Pesquisar"
             value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+            onChange={(e) => mudarBusca(e.target.value)}
             style={{
               padding: ".4rem .6rem",
               borderRadius: 8,
@@ -62,7 +82,7 @@ export function LancamentosList({
         {(["pendente", "pago", "vencido"] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setAba(tab)}
+            onClick={() => mudarAba(tab)}
             style={{
               background: "none",
               border: "none",
@@ -92,7 +112,7 @@ export function LancamentosList({
             </tr>
           </thead>
           <tbody>
-            {filtradas.slice(0, 8).map((l) => (
+            {visiveis.map((l) => (
               <tr key={l.id} style={{ borderTop: "1px solid var(--border)" }}>
                 <td style={{ padding: ".4rem 0" }}>{formatDate(l.data_vencimento)}</td>
                 <td style={{ padding: ".4rem" }}>
@@ -107,8 +127,33 @@ export function LancamentosList({
           </tbody>
         </table>
       )}
+
+      {totalPaginas > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: ".4rem", marginTop: ".7rem" }}>
+          <button
+            className="btn-secondary"
+            style={{ padding: ".25rem .6rem", fontSize: ".78rem" }}
+            disabled={paginaAtual === 1}
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+          >
+            {"<"}
+          </button>
+          <span style={{ fontSize: ".8rem", color: "var(--foreground-soft)" }}>
+            {paginaAtual} de {totalPaginas}
+          </span>
+          <button
+            className="btn-secondary"
+            style={{ padding: ".25rem .6rem", fontSize: ".78rem" }}
+            disabled={paginaAtual === totalPaginas}
+            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+          >
+            {">"}
+          </button>
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: ".6rem", paddingTop: ".5rem", borderTop: "1px solid var(--border)", fontSize: ".85rem", fontWeight: 600 }}>
-        <span>Total</span>
+        <span>Total ({filtradas.length})</span>
         <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(total)}</span>
       </div>
     </div>
