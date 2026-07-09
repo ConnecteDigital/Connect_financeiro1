@@ -6,7 +6,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 
 export type LinhaLancamento = {
   id: string;
-  data_vencimento: string;
+  data: string;
   descricao: string;
   contraparte: string | null;
   valor: number;
@@ -37,7 +37,7 @@ export function LancamentosList({
           l.descricao.toLowerCase().includes(busca.toLowerCase()) ||
           (l.contraparte ?? "").toLowerCase().includes(busca.toLowerCase())
       )
-      .sort((a, b) => a.data_vencimento.localeCompare(b.data_vencimento));
+      .sort((a, b) => a.data.localeCompare(b.data));
   }, [linhas, aba, busca]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / porPagina));
@@ -114,7 +114,7 @@ export function LancamentosList({
           <tbody>
             {visiveis.map((l) => (
               <tr key={l.id} style={{ borderTop: "1px solid var(--border)" }}>
-                <td style={{ padding: ".4rem 0" }}>{formatDate(l.data_vencimento)}</td>
+                <td style={{ padding: ".4rem 0" }}>{formatDate(l.data)}</td>
                 <td style={{ padding: ".4rem" }}>
                   <Link href={`/dashboard/lancamentos/${l.id}`}>{l.descricao}</Link>
                 </td>

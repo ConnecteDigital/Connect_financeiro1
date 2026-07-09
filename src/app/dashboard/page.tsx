@@ -70,7 +70,7 @@ export default async function PainelPage({
       .or(
         `and(data_vencimento.gte.${isoInicio},data_vencimento.lte.${isoFim}),and(data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`
       )
-      .order("data_vencimento", { ascending: true }),
+      .order("data_competencia", { ascending: true }),
     supabase
       .from("v_lancamentos")
       .select("id, valor, descricao, status, status_efetivo, data_competencia, data_vencimento, clientes(nome)")
@@ -78,7 +78,7 @@ export default async function PainelPage({
       .or(
         `and(data_vencimento.gte.${isoInicio},data_vencimento.lte.${isoFim}),and(data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`
       )
-      .order("data_vencimento", { ascending: true }),
+      .order("data_competencia", { ascending: true }),
     supabase.from("v_lancamentos").select("valor").eq("status_efetivo", "vencido"),
     supabase.from("transferencias").select("valor").gte("data", isoInicio).lte("data", isoFim),
     supabase
@@ -158,9 +158,12 @@ export default async function PainelPage({
     chartData.push({ dia: format(dia, "dd/MM"), saldo: ultimoValorConhecido });
   }
 
+  // O sistema atual mostra e ordena "Contas a receber/pagar" pela data de
+  // COMPETÊNCIA, não vencimento (conferido com dados reais: a mensalidade da
+  // POA 24H tem competência 10/07 e vencimento 11/07, e aparece no dia 10 lá).
   const mapLinha = (l: LancamentoBruto): LinhaLancamento => ({
     id: l.id,
-    data_vencimento: l.data_vencimento,
+    data: l.data_competencia,
     descricao: l.descricao,
     contraparte: l.clientes?.nome ?? null,
     valor: Number(l.valor),

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { startOfMonth, endOfMonth, format, parseISO, isValid } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { LancamentosFiltro } from "./LancamentosFiltro";
@@ -10,14 +11,24 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const POR_PAGINA = 30;
+const ISO = (d: Date) => format(d, "yyyy-MM-dd");
+
+function periodoValido(v: string | undefined): Date | null {
+  if (!v) return null;
+  const d = parseISO(v);
+  return isValid(d) ? d : null;
+}
 
 export default async function LancamentosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tipo?: string; categoria?: string; pagina?: string }>;
+  searchParams: Promise<{ tipo?: string; categoria?: string; pagina?: string; inicio?: string; fim?: string }>;
 }) {
-  const { tipo, categoria, pagina } = await searchParams;
+  const { tipo, categoria, pagina, inicio, fim } = await searchParams;
   const paginaAtual = Math.max(1, Number(pagina) || 1);
+  const hoje = new Date();
+  const isoInicio = ISO(periodoValido(inicio) ?? startOfMonth(hoje));
+  const isoFim = ISO(periodoValido(fim) ?? endOfMonth(hoje));
   const supabase = await createClient();
 
   const [{ data: categorias }, resultado] = await Promise.all([
@@ -26,13 +37,15 @@ export default async function LancamentosPage({
       let query = supabase
         .from("v_lancamentos")
         .select(
-          "id, tipo, valor, descricao, data_vencimento, status_efetivo, clientes(nome), categorias(nome), contas(nome)",
+          "id, tipo, valor, descricao, data_competencia, status_efetivo, clientes(nome), categorias(nome), contas(nome)",
           { count: "exact" }
-        );
+        )
+        .gte("data_competencia", isoInicio)
+        .lte("data_competencia", isoFim);
       if (tipo === "entrada" || tipo === "saida") query = query.eq("tipo", tipo);
       if (categoria) query = query.eq("categoria_id", categoria);
       return query
-        .order("data_vencimento", { ascending: false })
+        .order("data_competencia", { ascending: true })
         .range((paginaAtual - 1) * POR_PAGINA, paginaAtual * POR_PAGINA - 1);
     })(),
   ]);
@@ -52,6 +65,8 @@ export default async function LancamentosPage({
     const params = new URLSearchParams();
     if (tipo) params.set("tipo", tipo);
     if (categoria) params.set("categoria", categoria);
+    params.set("inicio", isoInicio);
+    params.set("fim", isoFim);
     params.set("pagina", String(p));
     return `/dashboard/lancamentos?${params.toString()}`;
   }
@@ -61,7 +76,7 @@ export default async function LancamentosPage({
       <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           <h1>Entradas e Saídas</h1>
-          <p>Competência, vencimento, categoria e conta — filtre por tipo e categoria.</p>
+          <p>Ordenado por competência — mesmo critério usado em Contas a receber/pagar.</p>
         </div>
         <Link href="/dashboard/lancamentos/novo" className="btn-primary">
           Novo lançamento
@@ -79,6 +94,8 @@ export default async function LancamentosPage({
             tipo={tipo === "entrada" || tipo === "saida" ? tipo : ""}
             categoriaId={categoria ?? ""}
             categorias={categoriasFiltro}
+            inicio={isoInicio}
+            fim={isoFim}
           />
 
           {lancamentos && lancamentos.length > 0 ? (
@@ -86,7 +103,7 @@ export default async function LancamentosPage({
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".88rem" }}>
                 <thead>
                   <tr style={{ textAlign: "left", fontSize: ".75rem", color: "var(--foreground-soft)" }}>
-                    <th style={{ padding: ".4rem .5rem .4rem 0" }}>Vencimento</th>
+                    <th style={{ padding: ".4rem .5rem .4rem 0" }}>Data</th>
                     <th style={{ padding: ".4rem .5rem" }}>Descrição</th>
                     <th style={{ padding: ".4rem .5rem" }}>Cliente</th>
                     <th style={{ padding: ".4rem .5rem" }}>Categoria</th>
@@ -98,7 +115,7 @@ export default async function LancamentosPage({
                 <tbody>
                   {lancamentos.map((l) => (
                     <tr key={l.id} style={{ borderTop: "1px solid var(--border)" }}>
-                      <td style={{ padding: ".5rem .5rem .5rem 0" }}>{formatDate(l.data_vencimento)}</td>
+                      <td style={{ padding: ".5rem .5rem .5rem 0" }}>{formatDate(l.data_competencia)}</td>
                       <td style={{ padding: ".5rem" }}>
                         <Link href={`/dashboard/lancamentos/${l.id}`}>{l.descricao}</Link>
                       </td>
@@ -147,7 +164,7 @@ export default async function LancamentosPage({
               )}
             </div>
           ) : (
-            <p className="placeholder-note">Nenhum lançamento encontrado com esse filtro.</p>
+            <p className="placeholder-note">Nenhum lançamento encontrado nesse período/filtro.</p>
           )}
         </>
       )}
