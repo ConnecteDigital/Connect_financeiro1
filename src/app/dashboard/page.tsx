@@ -54,10 +54,20 @@ export default async function PainelPage({
   const isoFim = ISO(fimMes);
   const periodoLabel = `${formatDate(isoInicio)} – ${formatDate(isoFim)}`;
 
+  const SELECT_LANCAMENTO =
+    "id, valor, descricao, status, status_efetivo, data_competencia, data_vencimento, clientes(nome)";
+  // Em aberto/Vencidos não têm limite de data (é o total em aberto agora,
+  // como no sistema atual — ele mostra até item de mês anterior ali). Só
+  // "Efetuados" respeita o período selecionado, porque é "o que entrou/saiu
+  // nesse período" de verdade.
+  const FILTRO_LISTA = `status_efetivo.eq.pendente,status_efetivo.eq.vencido,and(status.eq.pago,data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`;
+
   const [
     { data: contas, error: contasError },
-    { data: entradasMes },
-    { data: saidasMes },
+    { data: entradasPeriodo },
+    { data: saidasPeriodo },
+    { data: entradasLista },
+    { data: saidasLista },
     { data: vencidos },
     { data: transferenciasMes },
     { data: historicoPago },
@@ -65,19 +75,29 @@ export default async function PainelPage({
     supabase.from("v_saldo_contas").select("conta_id, nome, conta_pai_id, saldo").is("conta_pai_id", null),
     supabase
       .from("v_lancamentos")
-      .select("id, valor, descricao, status, status_efetivo, data_competencia, data_vencimento, clientes(nome)")
+      .select(SELECT_LANCAMENTO)
       .eq("tipo", "entrada")
       .or(
         `and(data_vencimento.gte.${isoInicio},data_vencimento.lte.${isoFim}),and(data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`
-      )
-      .order("data_competencia", { ascending: true }),
+      ),
     supabase
       .from("v_lancamentos")
-      .select("id, valor, descricao, status, status_efetivo, data_competencia, data_vencimento, clientes(nome)")
+      .select(SELECT_LANCAMENTO)
       .eq("tipo", "saida")
       .or(
         `and(data_vencimento.gte.${isoInicio},data_vencimento.lte.${isoFim}),and(data_competencia.gte.${isoInicio},data_competencia.lte.${isoFim})`
-      )
+      ),
+    supabase
+      .from("v_lancamentos")
+      .select(SELECT_LANCAMENTO)
+      .eq("tipo", "entrada")
+      .or(FILTRO_LISTA)
+      .order("data_competencia", { ascending: true }),
+    supabase
+      .from("v_lancamentos")
+      .select(SELECT_LANCAMENTO)
+      .eq("tipo", "saida")
+      .or(FILTRO_LISTA)
       .order("data_competencia", { ascending: true }),
     supabase.from("v_lancamentos").select("valor").eq("status_efetivo", "vencido"),
     supabase.from("transferencias").select("valor").gte("data", isoInicio).lte("data", isoFim),
@@ -104,8 +124,10 @@ export default async function PainelPage({
     );
   }
 
-  const entradas = (entradasMes ?? []) as unknown as LancamentoBruto[];
-  const saidas = (saidasMes ?? []) as unknown as LancamentoBruto[];
+  const entradas = (entradasPeriodo ?? []) as unknown as LancamentoBruto[];
+  const saidas = (saidasPeriodo ?? []) as unknown as LancamentoBruto[];
+  const entradasParaLista = (entradasLista ?? []) as unknown as LancamentoBruto[];
+  const saidasParaLista = (saidasLista ?? []) as unknown as LancamentoBruto[];
 
   const somaSe = (linhas: LancamentoBruto[], pred: (l: LancamentoBruto) => boolean) =>
     linhas.filter(pred).reduce((acc, l) => acc + Number(l.valor), 0);
@@ -255,13 +277,13 @@ export default async function PainelPage({
           titulo="Contas a receber"
           contraparteLabel="Cliente"
           addHref="/dashboard/lancamentos/novo"
-          linhas={entradas.map(mapLinha)}
+          linhas={entradasParaLista.map(mapLinha)}
         />
         <LancamentosList
           titulo="Contas a pagar"
           contraparteLabel="Fornecedor"
           addHref="/dashboard/lancamentos/novo"
-          linhas={saidas.map(mapLinha)}
+          linhas={saidasParaLista.map(mapLinha)}
         />
       </div>
     </>
